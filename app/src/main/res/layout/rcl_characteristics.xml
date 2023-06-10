@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <TextView
+        android:id="@+id/tvcharacteristicTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Characteristic"
+        android:textSize="10sp"
+        android:textColor="@android:color/black"
+        android:layout_marginTop="3dp"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginStart="8dp"
+        app:layout_constraintStart_toStartOf="parent"/>
+
+
+    <TextView
+        android:id="@+id/characteristicUUIDTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="UUID:"
+        android:textSize="10sp"
+        android:layout_marginTop="1dp"
+        app:layout_constraintTop_toBottomOf="@+id/tvcharacteristicTitle"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginStart="8dp"/>
+
+    <TextView
+        android:id="@+id/tvcharacteristicUUID"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="10sp"
+        android:textColor="@android:color/black"
+        android:layout_marginTop="1dp"
+        app:layout_constraintEnd_toStartOf="@+id/btnwrite"
+        app:layout_constraintTop_toBottomOf="@+id/tvcharacteristicTitle"
+        app:layout_constraintStart_toEndOf="@+id/characteristicUUIDTitle"
+        android:layout_marginStart="3dp"/>
+
+    <TextView
+        android:id="@+id/tvcharacteristicPropertiesTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Properties:"
+        android:textSize="10sp"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="1dp"
+        app:layout_constraintTop_toBottomOf="@+id/characteristicUUIDTitle"/>
+
+    <TextView
+        android:id="@+id/tvcharacteristicProperties"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@android:color/black"
+        android:textSize="10sp"
+        app:layout_constraintStart_toEndOf="@+id/tvcharacteristicPropertiesTitle"
+        android:layout_marginStart="3dp"
+        android:layout_marginTop="1dp"
+        app:layout_constraintTop_toBottomOf="@+id/characteristicUUIDTitle"/>
+
+    <Button
+        android:id="@+id/btnread"
+        android:layout_width="80dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="3dp"
+        android:text="读取"
+        app:layout_constraintTop_toBottomOf="@id/tvcharacteristicPropertiesTitle"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/btnwrite"
+        android:layout_marginEnd="8dp" />
+
+    <Button
+        android:id="@+id/btnwrite"
+        android:layout_width="80dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="3dp"
+        android:text="写入"
+        app:layout_constraintTop_toBottomOf="@+id/tvcharacteristicPropertiesTitle"
+        android:layout_marginEnd="8dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/btnread"/>
+
+
+    <EditText
+        android:id="@+id/edtinput"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@android:color/black"
+        android:textColorHint="@color/cardview_shadow_start_color"
+        android:hint="在此输入要发送的文本"
+        android:gravity="center"
+        android:textSize="14dp"
+        app:layout_constraintStart_toEndOf="@+id/tvcharacteristicPropertiesTitle"
+        android:layout_marginStart="3dp"
+        android:layout_marginTop="1dp"
+        app:layout_constraintTop_toBottomOf="@+id/btnwrite"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

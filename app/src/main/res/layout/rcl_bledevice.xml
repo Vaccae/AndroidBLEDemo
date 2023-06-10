@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!--名字-->
+    <TextView
+        android:id="@+id/rclnametext"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:minWidth="50dp"
+        android:text="N/A"
+        android:textColor="@android:color/black"
+        android:textSize="15dp"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="8dp"
+        app:layout_constraintTop_toTopOf="parent"/>
+    <!--mac地址-->
+    <TextView
+        android:id="@+id/rclmacAddressText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:minWidth="50dp"
+        android:textSize="15dp"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="5dp"
+        app:layout_constraintTop_toBottomOf="@+id/rclnametext"/>
+    <!--绑定状态-->
+    <TextView
+        android:id="@+id/rclbondStateText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:minWidth="50dp"
+        android:textSize="15dp"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="5dp"
+        app:layout_constraintTop_toBottomOf="@+id/rclmacAddressText"/>
+
+    <!--厂商-->
+    <TextView
+        android:id="@+id/rclFactoryText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="苹果"
+        android:minWidth="50dp"
+        android:textSize="15dp"
+        app:layout_constraintStart_toEndOf="@+id/rclbondStateText"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="5dp"
+        app:layout_constraintTop_toBottomOf="@+id/rclmacAddressText"/>
+
+    <!--连接按钮-->
+    <Button
+        android:id="@+id/rclconnecBtn"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:text="连接"
+        android:textSize="12dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginEnd="10dp"
+        android:layout_marginTop="10dp"
+        app:layout_constraintTop_toTopOf="parent"/>
+
+
+    <TextView
+        android:id="@+id/rclrssiText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="14dp"
+        android:minWidth="15dp"
+        android:gravity="center"
+        app:layout_constraintStart_toEndOf="@+id/rclbondStateText"
+        android:layout_marginStart="5dp"
+        android:layout_marginTop="8dp"
+        app:layout_constraintTop_toBottomOf="@+id/rclmacAddressText"/>
+
+    <TextView
+        android:id="@+id/rclrawDataBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="13dp"
+        android:text="RAW"
+        android:textColor="@color/design_default_color_on_primary"
+        android:minWidth="55dp"
+        android:padding="6dp"
+        android:gravity="center"
+        android:layout_marginEnd="30dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="1dp"
+        android:background="?android:attr/selectableItemBackground"
+        app:layout_constraintTop_toBottomOf="@+id/rclconnecBtn"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
