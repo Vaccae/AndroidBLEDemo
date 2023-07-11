@@ -33,13 +33,21 @@ object BLEByteArrayUtil {
     //获取当前ByteArray的总包数
     fun getTotalpkgs(bytes: ByteArray):Int{
         val totalbytes = bytes.slice(0..1)
+<<<<<<< HEAD
         return bytestoint2bit(totalbytes.toByteArray())
+=======
+        return bytearraytoint(totalbytes.toByteArray())
+>>>>>>> 76a04a9aef6b37fc56339b2f490525abae91aff2
     }
 
     //获取当前ByteArray的当前包数
     fun getCurpkgs(bytes: ByteArray):Int{
         val curbytes = bytes.slice(2..3)
+<<<<<<< HEAD
         return bytestoint2bit(curbytes.toByteArray())
+=======
+        return bytearraytoint(curbytes.toByteArray())
+>>>>>>> 76a04a9aef6b37fc56339b2f490525abae91aff2
     }
 
     //获取当前ByteArray的实际数据包
