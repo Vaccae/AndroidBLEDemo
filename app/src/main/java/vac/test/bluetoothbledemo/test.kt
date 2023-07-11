@@ -1,5 +1,9 @@
 package vac.test.bluetoothbledemo
 
+import java.nio.ByteBuffer
+import java.util.Arrays
+import kotlin.experimental.and
+
 fun Int.toHexString(): String = Integer.toHexString(this)
 
 fun encode(char: Char) = "\\u${char.toInt().toHexString()}"
@@ -13,25 +17,110 @@ fun decode(encodeText: String): String {
     return String(unicodes.toCharArray())
 }
 
+
 fun main() {
 
     val str = "我明天给你做饭吃！"
 
-    val unicode = str.toCharArray().map { encode(it) }
-        .joinToString(separator = "", truncated = "")
+//    val byte1 = byteArrayOf(1, 2, 3, 4, 5)
+//    val byte2 = byteArrayOf(6, 7)
+//    val byte3 = byteArrayOf(8, 9)
+//
+//    val array = arrayOf(byte1, byte2, byte3)
+//
+//    var byteArray = byteArrayOf()
+//
+//    for (cur in array) {
+//        byteArray += cur
+//    }
+//
+//    println(byteArray)
+//
 
-    print("$str  转换后：$unicode")
+//
+//    val unicode = str.toCharArray().map { encode(it) }
+//        .joinToString(separator = "", truncated = "")
+//
+//    print("$str  转换后：$unicode")
+//
+//    val decodestr = decode(unicode)
+//    println("转换回后：$decodestr")
+//
+    val int = 5
+    val byte = inttobytearray(int)
+    println(byte)
 
-    val decodestr = decode(unicode)
-    println("转换回后：$decodestr")
+
+    val tempint = ByteBuffer.wrap(byte).short
+    val tmpint = bytearraytoint(byte)
+    println(tmpint)
+
+    val tt = ByteBuffer.wrap(byte).short.toUShort()
+    println(tt)
+
 
     val bytearr = str.toByteArray(charset = Charsets.UTF_8)
-    val bytestr = bytesToHexString(bytearr)
-    println(bytestr)
+//    val bytestr = bytesToHexString(bytearr)
+    println(bytearr)
 
-    val bytechange = hexStringToBytes(bytestr!!)
-    val finalstr = String(bytechange!!, Charsets.UTF_8)
-    println(finalstr)
+    val lstbytearr = bytearr.toList().chunked(5)
+    for (item in lstbytearr){
+        val temp = item.toByteArray()
+        println(temp)
+    }
+
+    for (i in lstbytearr.indices){
+        val tmparr = arrayListOf(lstbytearr.size.toByte(), i.toByte())
+        tmparr.addAll(lstbytearr[i])
+        val arrres = tmparr.toByteArray()
+        println(arrres)
+    }
+
+//    val bytechange = hexStringToBytes(bytestr!!)
+//    val finalstr = String(bytechange!!, Charsets.UTF_8)
+//    println(finalstr)
+
+//    val lst = arrayListOf("1","2","3")
+//    println("原始")
+//    lst.forEach {
+//        println(it)
+//    }
+//    val arr = lst.toTypedArray()
+//    change(arr)
+//    println("修改")
+//    val newlst = arr.asList()
+//    newlst.forEach {
+//        println(it)
+//    }
+}
+
+
+fun inttobytearray(num: Int): ByteArray {
+    val byteArray = ByteArray(2)
+    val lowH = ((num shr 8) and 0xff).toByte()
+    val lowL = (num and 0xff).toByte()
+    byteArray[0] = lowH
+    byteArray[1] = lowL
+    return byteArray
+}
+
+fun bytearraytoint(bytes: ByteArray): Int {
+    val lowH = (bytes[0].toInt() shl 8)
+    val lowl = bytes[1].toInt()
+
+    var resint = if (lowH + lowl < 0) {
+        65536 + lowH + lowl
+    } else {
+        lowH + lowl
+    }
+
+    return resint
+}
+
+fun change(arr: Array<String>) {
+    for (i in arr.indices) {
+        arr[i] += "kkk"
+    }
 }
 
 fun bytesToHexString(src: ByteArray?): String? {

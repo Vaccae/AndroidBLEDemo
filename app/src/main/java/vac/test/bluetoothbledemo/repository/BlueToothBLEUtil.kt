@@ -28,6 +28,7 @@ import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import pub.devrel.easypermissions.AfterPermissionGranted
@@ -37,6 +38,7 @@ import vac.test.bluetoothbledemo.EncodeUtil
 import vac.test.bluetoothbledemo.bytesToHexString
 import vac.test.bluetoothbledemo.ui.MainActivity
 import java.io.IOException
+import java.util.Hashtable
 import java.util.UUID
 
 object BlueToothBLEUtil {
@@ -57,6 +59,8 @@ object BlueToothBLEUtil {
         Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.BLUETOOTH_ADVERTISE
     )
 
+    //服务端接收的HashTable
+    private var mHtRecvByteArray: Hashtable<String, Array<ByteArray?>> = Hashtable()
 
     private var mBluetoothManager: BluetoothManager? = null
     private var mBluetoothAdapter: BluetoothAdapter? = null
@@ -72,6 +76,10 @@ object BlueToothBLEUtil {
     var hasInit = false
 
     lateinit var mApplication: Application
+
+    //MTU传输值
+    var mtuSize = 20
+
 
     //检测蓝牙权限
     fun checkBlueToothPermission(permissions: String = ""): Boolean {
@@ -339,7 +347,12 @@ object BlueToothBLEUtil {
     fun requestMTU(size: Int = 512): Boolean {
         return if (checkBlueToothPermission()) {
             mBluetoothGatt?.let {
-                it.requestMtu(size)
+                if (it.requestMtu(size)) {
+                    mtuSize = size
+                    true
+                } else {
+                    false
+                }
             } ?: false
         } else {
             false
@@ -358,6 +371,15 @@ object BlueToothBLEUtil {
         } else {
             null
         }
+    }
+
+    //发现服务
+    fun discoverServices(): Boolean {
+        return if (checkBlueToothPermission(Manifest.permission.BLUETOOTH_CONNECT)) {
+            mBluetoothGatt?.let {
+                return it.discoverServices()
+            } ?: false
+        } else false
     }
 
     //断开蓝牙Gatt
@@ -402,14 +424,75 @@ object BlueToothBLEUtil {
         }
     }
 
+    //分包发送数据
+    fun writeCharacteristicByGroup(
+        characteristic: BluetoothGattCharacteristic,
+        byteArray: ByteArray
+    ) {
+        CoroutineScope(Dispatchers.IO).launch {
+            if (checkBlueToothPermission(Manifest.permission.BLUETOOTH_CONNECT)) {
+                //组装发送的分包数据
+                val sendbytes = BLEByteArrayUtil.calcSendbyteArray(byteArray)
+                mBluetoothGatt?.let {
+                    for (curbytes in sendbytes) {
+                        curbytes?.let { byte ->
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                it.writeCharacteristic(
+                                    characteristic,
+                                    byte,
+                                    BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
+                                )
+                            } else {
+                                characteristic.setValue(byte)
+                                it.writeCharacteristic(characteristic)
+                            }
+                        }
+                        delay(30)
+                    }
+                } ?: {
+                    throw IOException("mBluetoothGatt为空")
+                }
+            }
+        }
+    }
+
+    //分包发送Characteristic
+    suspend fun writeCharacteristicSplit(
+        characteristic: BluetoothGattCharacteristic,
+        byteArray: ByteArray
+    ) {
+        if (checkBlueToothPermission(Manifest.permission.BLUETOOTH_CONNECT)) {
+            mBluetoothGatt?.let {
+                //获取到拆分后的数据包数组
+                val sendarray = BLEByteArrayUtil.calcSendbyteArray(byteArray)
+                for (cursend in sendarray) {
+                    cursend?.let { cur ->
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            it.writeCharacteristic(
+                                characteristic,
+                                cur,
+                                BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
+                            )
+                        } else {
+                            characteristic.setValue(cur)
+                            it.writeCharacteristic(characteristic)
+                        }
+                        delay(50)
+                    }
+                }
+            } ?: {
+                throw IOException("mBluetoothGatt为空")
+            }
+        }
+    }
+
+
     //发送Characteristic
     fun writeCharacteristic(
         characteristic: BluetoothGattCharacteristic,
         byteArray: ByteArray
     ) {
         if (checkBlueToothPermission(Manifest.permission.BLUETOOTH_CONNECT)) {
-//        var hexstr = byteArrsyToHexString(byteArray)
-//        var transbytes = hexstr!!.toByteArray()
 
             mBluetoothGatt?.let {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -450,7 +533,48 @@ object BlueToothBLEUtil {
                 device, requestId, BluetoothGatt.GATT_SUCCESS,
                 offset, value
             )
+
         }
+    }
+
+    //处理服务端接收HashTable,返回值为True则全部接收完成
+    fun dealRecvByteArray(deviceAdr: String, value: ByteArray): Boolean {
+        //获取总包数
+        val totalpkgs = BLEByteArrayUtil.getTotalpkgs(value)
+        //获取当前包数
+        val curpkgs = BLEByteArrayUtil.getCurpkgs(value)
+        //获取实际数据
+        val curdatabytes = BLEByteArrayUtil.getByteArray(value)
+
+        //获取HashTable中的数据包
+        var arraybytes = arrayOfNulls<ByteArray>(totalpkgs)
+        //如果HashTable中存在，直接赋值
+        if (mHtRecvByteArray.containsKey(deviceAdr)) {
+            arraybytes = mHtRecvByteArray[deviceAdr]!!
+        }
+        //设置当前包的数据
+        arraybytes[curpkgs] = curdatabytes
+        //重新写回Hashtable中
+        mHtRecvByteArray.put(deviceAdr, arraybytes)
+
+        //当前包和总包数相同，说明全部完成
+        return totalpkgs == curpkgs + 1
+    }
+
+    //获取接收数据,获取完整数据后，将Hashtable数据去掉
+    fun getRecvByteArray(deviceAdr: String): ByteArray {
+        val arrbytes = mHtRecvByteArray[deviceAdr]
+        var result = byteArrayOf()
+        arrbytes?.let {
+            for (cur in it) {
+                cur?.let { p ->
+                    result += cur
+                }
+            }
+        }
+        //组装完后清除
+        mHtRecvByteArray.remove(deviceAdr)
+        return result
     }
 
     fun setCharacteristicNotify(characteristic: BluetoothGattCharacteristic, bool: Boolean) {
@@ -482,5 +606,33 @@ object BlueToothBLEUtil {
         }
     }
 
+
+    suspend fun notifyCharacteristicChangedSplit(
+        device: BluetoothDevice,
+        characteristic: BluetoothGattCharacteristic,
+        byteArray: ByteArray
+    ) {
+        if (checkBlueToothPermission(Manifest.permission.BLUETOOTH_CONNECT)) {
+            //获取到拆分后的数据包数组
+            val sendarray = BLEByteArrayUtil.calcSendbyteArray(byteArray)
+            for (cursend in sendarray) {
+                //回复客户端,让客户端读取该特征新赋予的值，获取由服务端发送的数据
+                cursend?.let { cur ->
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        mBluetoothGattServer!!.notifyCharacteristicChanged(
+                            device,
+                            characteristic,
+                            false,
+                            cur
+                        )
+                    } else {
+                        characteristic.value = cur
+                        mBluetoothGattServer!!.notifyCharacteristicChanged(device, characteristic, false)
+                    }
+                    delay(50)
+                }
+            }
+        }
+    }
 
 }

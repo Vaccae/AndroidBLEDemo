@@ -91,6 +91,15 @@ class ConnectFragment : BaseFragment<FragmentConnectBinding>() {
             }
         }
 
+        override fun onMtuChanged(gatt: BluetoothGatt?, mtu: Int, status: Int) {
+            super.onMtuChanged(gatt, mtu, status)
+            lifecycleScope.launch {
+                connectViewModel.connectIntent.send(
+                    ConnectIntent.Error("通讯的MTU值修改：${mtu}")
+                )
+            }
+        }
+
         override fun onServicesDiscovered(gatt: BluetoothGatt?, status: Int) {
             super.onServicesDiscovered(gatt, status)
             lifecycleScope.launch {
@@ -100,6 +109,11 @@ class ConnectFragment : BaseFragment<FragmentConnectBinding>() {
                             connectViewModel.connectIntent.send(
                                 ConnectIntent.Discovered(it.services)
                             )
+                        }
+
+                        launch {
+                            //连接成功后设置MTU通讯
+                            BlueToothBLEUtil.requestMTU(512)
                         }
                     }
 
@@ -132,6 +146,7 @@ class ConnectFragment : BaseFragment<FragmentConnectBinding>() {
                     BluetoothGatt.GATT_READ_NOT_PERMITTED -> {
 
                     }
+
                     else -> {
                         connectViewModel.connectIntent.send(
                             ConnectIntent.Error("权限读取失败")
@@ -142,6 +157,7 @@ class ConnectFragment : BaseFragment<FragmentConnectBinding>() {
 
         }
 
+
         override fun onCharacteristicChanged(
             gatt: BluetoothGatt,
             characteristic: BluetoothGattCharacteristic,
@@ -150,12 +166,41 @@ class ConnectFragment : BaseFragment<FragmentConnectBinding>() {
             super.onCharacteristicChanged(gatt, characteristic, value)
 
             lifecycleScope.launch {
-                val str = "返回消息：${String(value)}"
-                connectViewModel.connectIntent.send(
-                    ConnectIntent.CharacteristicNotify(str, characteristic)
-                )
+                //处理接收的数据
+                val res = BlueToothBLEUtil.dealRecvByteArray(gatt.device.address, value)
+
+                //接收完毕后进行数据处理
+                if(res) {
+                    //获取接收完的数据
+                    val recvByteArray = BlueToothBLEUtil.getRecvByteArray(gatt.device.address)
+
+                    val str = "返回消息：${String(recvByteArray)}"
+                    connectViewModel.connectIntent.send(
+                        ConnectIntent.CharacteristicNotify(str, characteristic)
+                    )
+                }
+
             }
         }
+
+        override fun onCharacteristicWrite(
+            gatt: BluetoothGatt?,
+            characteristic: BluetoothGattCharacteristic?,
+            status: Int
+        ) {
+            super.onCharacteristicWrite(gatt, characteristic, status)
+//            lifecycleScope.launch {
+//                ConnectIntent.Error("${status} ")
+//                characteristic?.let {
+//                    if (BlueToothBLEUtil.checkBlueToothPermission(Manifest.permission.BLUETOOTH_CONNECT)) {
+//                        gatt!!.readCharacteristic(it)
+//                        ConnectIntent.Error(" ${String(it.value)}")
+//                    }
+//                }
+//
+//            }
+        }
+
 
     }
 
@@ -217,23 +262,16 @@ class ConnectFragment : BaseFragment<FragmentConnectBinding>() {
                     connectViewModel.connectState.collect {
                         when (it) {
                             is ConnectState.Idle -> {
-                                binding.btnDo.text ="连接"
+                                binding.btnDo.text = "连接"
                                 binding.tvMsgShow.text = "断开连接"
                             }
+
                             is ConnectState.Connect -> {
-                                if (ActivityCompat.checkSelfPermission(
-                                        requireContext(),
-                                        Manifest.permission.BLUETOOTH_CONNECT
-                                    ) != PackageManager.PERMISSION_GRANTED
-                                ) {
-                                    return@collect
-                                }
-                                it.gatt.discoverServices()
-                                binding.btnDo.text ="断开连接"
+                                binding.btnDo.text = "断开连接"
                                 binding.tvMsgShow.text = "${it.gatt.device.name}连接成功"
                             }
 
-                            is ConnectState.Info ->{
+                            is ConnectState.Info -> {
                                 binding.tvMsgShow.text = it.info
                             }
 
