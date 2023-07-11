@@ -58,6 +58,11 @@ class ServerViewModel : ViewModel() {
                     is ServerIntent.Error -> {
                         _serverState.emit(ServerState.Error(it.msg))
                     }
+                    is ServerIntent.RecvByteArray -> {
+                        it.bytes?.let {
+                            //开始组装数据
+                        }
+                    }
                 }
             }
         }

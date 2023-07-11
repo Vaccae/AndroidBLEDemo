@@ -37,6 +37,7 @@ import vac.test.bluetoothbledemo.intent.ServerIntent
 import vac.test.bluetoothbledemo.State.ServerState
 import vac.test.bluetoothbledemo.bytesToHexString
 import vac.test.bluetoothbledemo.hexStringToBytes
+import vac.test.bluetoothbledemo.repository.BLEByteArrayUtil
 import vac.test.bluetoothbledemo.repository.BlueToothBLEUtil
 import vac.test.bluetoothbledemo.vm.ServerViewModel
 
@@ -143,6 +144,18 @@ class ServerFragment : BaseFragment<FragmentServerBinding>() {
             }
         }
 
+        override fun onMtuChanged(device: BluetoothDevice?, mtu: Int) {
+            super.onMtuChanged(device, mtu)
+
+            lifecycleScope.launch {
+                BlueToothBLEUtil.mtuSize = mtu
+                val msg = "通讯的MTU值改为${BlueToothBLEUtil.mtuSize}"
+                serverViewModel.serverIntent.send(
+                    ServerIntent.Info(msg)
+                )
+            }
+        }
+
         //添加本地服务回调
         override fun onServiceAdded(status: Int, service: BluetoothGattService) {
             super.onServiceAdded(status, service)
@@ -219,39 +232,44 @@ class ServerFragment : BaseFragment<FragmentServerBinding>() {
 //                offset, value
 //            )
 
-            var readstr = String(value)
 
-            val resbytearray = "2${readstr}".toByteArray()
             BlueToothBLEUtil.sendResponse(
-                device,requestId,offset,resbytearray
+                device,requestId,offset,value
             )
 
+            //处理接收的数据
+            val res = BlueToothBLEUtil.dealRecvByteArray(device.address, value)
 
-            lifecycleScope.launch {
-                serverViewModel.serverIntent.send(
+            //接收完毕后进行数据处理
+            if(res) {
+                //获取接收完的数据
+                val recvByteArray = BlueToothBLEUtil.getRecvByteArray(device.address)
 
-                            ServerIntent.Info(
+                var readstr = String(recvByteArray)
+                lifecycleScope.launch {
+                    serverViewModel.serverIntent.send(
+                        ServerIntent.Info(
                             "${device.address} 请求写入特征值:  UUID = ${characteristic.uuid} " +
-                                    "写入值 = ${ readstr}"
-                            )
-                )
-
-                lifecycleScope.async {
-                    //模拟数据处理，延迟100ms
-                    delay(100)
-
-                    readstr = "1$readstr"
-                    val readbytearray = readstr.toByteArray()
-                    characteristic.value = readbytearray
-
-                    //回复客户端,让客户端读取该特征新赋予的值，获取由服务端发送的数据
-//                    mBluetoothGattServer.notifyCharacteristicChanged(device, characteristic, false)
-                    BlueToothBLEUtil.notifyCharacteristicChanged(
-                        device , characteristic, readbytearray
+                                    "写入值 = ${readstr}"
+                        )
                     )
+
+                    lifecycleScope.async {
+                        //模拟数据处理，延迟100ms
+                        delay(100)
+
+                        val sb = StringBuilder()
+                        for(i in 1..10){
+                            sb.append("服务端收到了客户端发的消息，这里是返回的消息,第${i}条 ")
+                        }
+
+                        val readbytearray = sb.toString().toByteArray()
+                        characteristic.value = readbytearray
+
+                        //回复客户端,让客户端读取该特征新赋予的值，获取由服务端发送的数据
+                        BlueToothBLEUtil.notifyCharacteristicChangedSplit(device, characteristic, readbytearray)
+                    }
                 }
-
-
             }
         }
 

@@ -40,6 +40,9 @@ class ConnectViewModel : ViewModel() {
                         curGatt = it.gatt
                         connectDevice(curGatt!!)
                         isConnect = true
+
+                        //开始发现服务
+                        BlueToothBLEUtil.discoverServices()
                     }
 
                     is ConnectIntent.Discovered -> {
@@ -53,8 +56,12 @@ class ConnectViewModel : ViewModel() {
                     }
 
                     is ConnectIntent.WriteCharacteristic ->{
-                        val byteArray = it.str.toByteArray(charset = Charsets.UTF_8)
-                        BlueToothBLEUtil.writeCharacteristic(it.characteristic, byteArray)
+//                        val byteArray = it.str.toByteArray(charset = Charsets.UTF_8)
+//                        BlueToothBLEUtil.writeCharacteristic(it.characteristic, byteArray)
+                        launch {
+                            val byteArray = it.str.toByteArray(charset = Charsets.UTF_8)
+                            BlueToothBLEUtil.writeCharacteristicSplit(it.characteristic, byteArray)
+                        }
                     }
 
                     is ConnectIntent.ReadCharacteristic ->{

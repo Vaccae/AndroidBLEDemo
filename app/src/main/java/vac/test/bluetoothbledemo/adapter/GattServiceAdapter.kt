@@ -16,6 +16,7 @@ import vac.test.bluetoothbledemo.databinding.RclGattserviceBinding
 import vac.test.bluetoothbledemo.intent.ConnectIntent
 import vac.test.bluetoothbledemo.repository.BlueToothBLEUtil
 import vac.test.bluetoothbledemo.vm.ConnectViewModel
+import java.lang.StringBuilder
 
 class GattServiceDiffCallback : DiffUtil.ItemCallback<BluetoothGattService>() {
     override fun areItemsTheSame(
@@ -95,8 +96,13 @@ class GattServiceAdapter(viewModel: ConnectViewModel) :
         //发送数据
         binding.btnwrite.setOnClickListener {
             connectViewModel.viewModelScope.launch {
-                val sendmsg = binding.edtinput.text.toString()
+                val sb = StringBuilder()
+                for (i in 1..60){
+                    sb.append("我是测试的数据，看看可不可以进行分包传输，当前为第${i}条 ")
+                }
+//                val sendmsg = binding.edtinput.text.toString()
 
+                val sendmsg = sb.toString()
                 connectViewModel.connectIntent.send(
                     ConnectIntent.WriteCharacteristic(sendmsg, characteristic)
                 )
